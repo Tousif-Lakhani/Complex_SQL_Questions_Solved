@@ -825,7 +825,7 @@ limit 1;
 -- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 /* 
-Question - 25 - LinkedIn - https://lnkd.in/ga65v3QN
+Question - 26 - LinkedIn - https://lnkd.in/ga65v3QN
 Consider all LinkedIn users who, at some point, worked at Microsoft. For how many of them was Google their next employer right after Microsoft (no employers in between)?
 
 SELECT * FROM xx;
@@ -850,12 +850,147 @@ select * from cte
 where employer = "Microsoft" AND Next_Employer = "Google";
 
 -- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+-- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#NEED TO UNDERSTAND BETTER
+
+/* 
+Question - 27 - GoldmanSachs, Deloitte - https://shorturl.at/33YeI
+You are given a day worth of scheduled departure and arrival times of trains at one train station. 
+One platform can only accommodate one train from the beginning of the minute it's scheduled to arrive until the end of the minute it's scheduled to depart. 
+Find the minimum number of platforms necessary to accommodate the entire scheduled traffic
+
+SELECT * FROM xx;
+*/
+
+CREATE TABLE train_arrivals (train_id INT, arrival_time DATETIME);
+
+INSERT INTO train_arrivals (train_id, arrival_time) VALUES
+(1, '2024-11-17 08:00'),(2, '2024-11-17 08:05'),(3, '2024-11-17 08:05'),(4, '2024-11-17 08:10'),(5, '2024-11-17 08:10'),
+(6, '2024-11-17 12:15'),(7, '2024-11-17 12:20'),(8, '2024-11-17 12:25'),(9, '2024-11-17 15:00'),(10, '2024-11-17 15:00'),
+(11, '2024-11-17 15:00'),(12, '2024-11-17 15:06'),(13, '2024-11-17 20:00'),(14, '2024-11-17 20:10');
+
+CREATE TABLE train_departures (train_id INT, departure_time DATETIME);
+
+INSERT INTO train_departures (train_id, departure_time) VALUES
+(1, '2024-11-17 08:15'),(2, '2024-11-17 08:10'),(3, '2024-11-17 08:20'),(4, '2024-11-17 08:25'),(5, '2024-11-17 08:20'),(6, '2024-11-17 13:00'),
+(7, '2024-11-17 12:25'),(8, '2024-11-17 12:30'),(9, '2024-11-17 15:05'),(10, '2024-11-17 15:10'),(11, '2024-11-17 15:15'),(12, '2024-11-17 15:15'),
+(13, '2024-11-17 20:15'),(14, '2024-11-17 20:15');
+
+## USED QWEN TO UNDERSTAND THE LOGIC & STRATEGY
+
+WITH events AS (
+    -- Combine arrival and departure events
+    SELECT arrival_time AS event_time, 1 AS delta FROM train_arrivals
+    UNION ALL
+    SELECT departure_time, -1 FROM train_departures
+),
+sorted_events AS (
+    -- Sort events by time, prioritizing departures over arrivals
+    SELECT event_time, delta,
+           ROW_NUMBER() OVER (ORDER BY event_time, delta DESC) AS rn
+    FROM events
+)
+SELECT MAX(current_count) AS min_platforms
+FROM (
+    -- Compute running count of trains
+    SELECT event_time,
+           SUM(delta) OVER (ORDER BY rn) AS current_count
+    FROM sorted_events
+) sub;
+
+-- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+-- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+/* 
+Question - 28 - Meta, Salesforce - http://surl.li/ltyjkr
+Find the highest salary among salaries that appears only once.
+
+SELECT * FROM xx;
+*/
+
+CREATE TABLE employee(id INT,first_name VARCHAR(50),last_name VARCHAR(50),age INT,sex VARCHAR(1),employee_title VARCHAR(50),department VARCHAR(50),salary INT,target INT,bonus INT,email VARCHAR(100),city VARCHAR(50),address VARCHAR(100),manager_id INT);
+
+INSERT INTO employee (id, first_name, last_name, age, sex, employee_title, department, salary, target, bonus, email, city, address, manager_id)VALUES
+(5, 'Max', 'George', 26, 'M', 'Sales', 'Sales', 1300, 200, 150, 'Max@company.com', 'California', '2638 Richards Avenue', 1),
+(13, 'Katty', 'Bond', 56, 'F', 'Manager', 'Management', 150000, 0, 300, 'Katty@company.com', 'Arizona', NULL, 1),
+(11, 'Richerd', 'Gear', 57, 'M', 'Manager', 'Management', 250000, 0, 300, 'Richerd@company.com', 'Alabama', NULL, 1),
+(10, 'Jennifer', 'Dion', 34, 'F', 'Sales', 'Sales', 1000, 200, 150, 'Jennifer@company.com', 'Alabama', NULL, 13),
+(19, 'George', 'Joe', 50, 'M', 'Manager', 'Management', 250000, 0, 300, 'George@company.com', 'Florida', '1003 Wyatt Street', 1),
+(18, 'Laila', 'Mark', 26, 'F', 'Sales', 'Sales', 1000, 200, 150, 'Laila@company.com', 'Florida', '3655 Spirit Drive', 11),
+(20, 'Sarrah', 'Bicky', 31, 'F', 'Senior Sales', 'Sales', 2000, 200, 150, 'Sarrah@company.com', 'Florida', '1176 Tyler Avenue', 19);
 
 
+with cte as (
+SELECT 
+	*,
+    count(salary) over (partition by salary order by salary) as salary_frequency
+FROM employee)
+
+select max(salary) as Max_Salary from cte
+where salary_frequency = 1;
+
+-- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+/* 
+Question - 29 - Cisco - https://shorturl.at/WDxNR
+Convert the first letter of each word found in content_text to uppercase, while keeping the rest of the letters lowercase. 
+Your output should include the original text in one column and the modified text in another column.
+
+SELECT * FROM xx;
+*/
+
+CREATE TABLE user_content (content_id INT PRIMARY KEY,customer_id INT,content_type VARCHAR(50),content_text VARCHAR(255));
+
+INSERT INTO user_content (content_id, customer_id, content_type, content_text) VALUES
+(1, 2, 'comment', 'hello world! this is a TEST.'),(2, 8, 'comment', 'what a great day'),(3, 4, 'comment', 'WELCOME to the event.'),
+(4, 2, 'comment', 'e-commerce is booming.'),(5, 6, 'comment', 'Python is fun!!'),(6, 6, 'review', '123 numbers in text.'),
+(7, 10, 'review', 'special chars: @#$$%^&*()'),(8, 4, 'comment', 'multiple CAPITALS here.'),(9, 6, 'review', 'sentence. and ANOTHER sentence!'),(10, 2, 'post', 'goodBYE!');
 
 
+with cte as (
+	select content_text,  
+    upper(substring(content_text,1,1)) as first_letter, 
+    lower(substring(content_text,2)) as rem_sentence FROM user_content)
+
+select content_text, concat(first_letter , rem_sentence) as new_content_text from cte;
+
+-- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+/* 
+Question - 29 - Amzaon - https://shorturl.at/4Hs79
+Given the users' sessions logs on a particular day, calculate how many hours each user was active that day. Note: The session starts when state=1 and ends when state=0.
+
+SELECT * FROM xx;
+*/
+
+CREATE TABLE customer_state_log (cust_id VARCHAR(10),state INT,timestamp TIME);
+
+INSERT INTO customer_state_log (cust_id, state, timestamp) VALUES
+('c001', 1, '07:00:00'),('c001', 0, '09:30:00'),('c001', 1, '12:00:00'),('c001', 0, '14:30:00'),
+('c002', 1, '08:00:00'),('c002', 0, '09:30:00'),('c002', 1, '11:00:00'),('c002', 0, '12:30:00'),
+('c002', 1, '15:00:00'),('c002', 0, '16:30:00'),('c003', 1, '09:00:00'),('c003', 0, '10:30:00'),
+('c004', 1, '10:00:00'),('c004', 0, '10:30:00'),('c004', 1, '14:00:00'),('c004', 0, '15:30:00'),
+('c005', 1, '10:00:00'),('c005', 0, '14:30:00'),('c005', 1, '15:30:00'),('c005', 0, '18:30:00');
 
 
+with cte_2 as (
+with cte as (
+select 
+	*,
+    lead(timestamp) over (partition by cust_id order by cust_id) as end_timestamp
+from customer_state_log)
+
+select 
+	*,
+    subtime(end_timestamp, timestamp ) as hours_studied,
+    lead(subtime(end_timestamp, timestamp)) over (partition by cust_id order by cust_id) as next_session
+from cte
+where state =1)
+
+select 
+	*,
+    addtime(hours_studied, next_session) as total_time  
+from cte_2;
 
 
 
